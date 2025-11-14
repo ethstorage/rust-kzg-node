@@ -1,0 +1,14 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    uses: napi-rs/napi-rs/.github/workflows/nodejs.yml@main
+    with:
+      package-name: rust-kzg-node
+      working-directory: .
+      version: ${{ github.ref_name }}
