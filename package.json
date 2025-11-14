@@ -1,0 +1,19 @@
+{
+  "name": "rust-kzg-node",
+  "version": "1.0.0",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "scripts": {
+    "build": "napi build --release",
+    "build:debug": "napi build",
+    "test": "node test.js"
+  },
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "index.node"
+  ],
+  "devDependencies": {
+    "@napi-rs/cli": "^3.4.1"
+  }
+}

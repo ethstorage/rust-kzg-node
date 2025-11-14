@@ -1,0 +1,19 @@
+[package]
+name = "rust_kzg_node"
+version = "0.1.0"
+edition = "2021"
+description = "High-performance KZG library bridge for Node.js using rust-kzg-blst."
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+rust-kzg-blst = { git = "https://github.com/grandinetech/rust-kzg", package = "rust-kzg-blst" }
+kzg = { git = "https://github.com/grandinetech/rust-kzg", package = "kzg" }
+napi = { version = "3.1.1" }
+napi-derive = "3.1.1"
+rayon = "1.7"
+hex = "0.4"
+
+[build-dependencies]
+napi-build = "1.0.1"
