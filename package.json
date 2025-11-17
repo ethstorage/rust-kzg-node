@@ -5,18 +5,17 @@
   "repository": "https://github.com/ethstorage/rust-kzg-node/",
   "main": "index.js",
   "types": "index.d.ts",
+  "license": "MIT",
   "scripts": {
-    "build": "napi build --release",
+    "build": "napi build",
     "build:debug": "napi build",
     "test": "node test.js",
-    "prepublishOnly": "napi prepublish -t npm",
-    "postinstall": "napi install"
+    "prepublishOnly": "napi prepublish -t npm"
   },
   "files": [
     "index.js",
     "index.d.ts",
-    "*.node",
-    "!*.tsbuildinfo"
+    "*.node"
   ],
   "devDependencies": {
     "@napi-rs/cli": "^3.4.1"
