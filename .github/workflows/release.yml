@@ -59,9 +59,8 @@ jobs:
           targets: ${{ matrix.target }}
 
       - name: Install musl-tools
-        if: contains(matrix.target, 'musl')
+        if: contains(matrix.target, 'musl') && runner.os == 'Linux'
         run: sudo apt-get install -y musl-tools
-        if: runner.os == 'Linux'
 
       - name: Install aarch64 cross-compiler
         if: contains(matrix.target, 'aarch64') && runner.os == 'Linux'
@@ -110,7 +109,6 @@ jobs:
           mkdir -p npm
           cp index.js package.json README.md npm/
           cp artifacts/index.d.ts npm/
-          # 移动各平台二进制文件到对应目录
           for target in $(cat napi.config.json | jq -r '.triples[]'); do
             mkdir -p npm/$target
             cp artifacts/$target/index.node npm/$target/
