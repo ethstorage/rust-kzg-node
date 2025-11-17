@@ -5,6 +5,10 @@ on:
     tags:
       - "v*"
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
   build:
     uses: napi-rs/napi-rs/.github/workflows/nodejs.yml@main
