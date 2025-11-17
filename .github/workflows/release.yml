@@ -12,3 +12,5 @@ jobs:
       package-name: rust-kzg-node
       working-directory: .
       version: ${{ github.ref_name }}
+      publish: true              # auto npm publish
+      registry: https://registry.npmjs.org
