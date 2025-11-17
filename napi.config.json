@@ -1,8 +1,6 @@
 {
   "name": "rust-kzg-node",
-  "version": "1.0.0",
-  "description": "Rust KZG Node.js bridge",
-  "repository": "https://github.com/ethstorage/rust-kzg-node/",
+  "version": "0.1.0",
   "triples": [
     "x86_64-pc-windows-msvc",
     "aarch64-pc-windows-msvc",

@@ -1,31 +1,38 @@
 {
   "name": "rust-kzg-node",
-  "version": "0.0.3",
+  "version": "0.1.0",
+  "description": "Rust KZG Node.js bridge",
+  "repository": "https://github.com/ethstorage/rust-kzg-node/",
   "main": "index.js",
   "types": "index.d.ts",
   "scripts": {
     "build": "napi build --release",
     "build:debug": "napi build",
     "test": "node test.js",
-    "prepublishOnly": "napi prepublish -t npm"
+    "prepublishOnly": "napi prepublish -t npm",
+    "postinstall": "napi install"
   },
   "files": [
     "index.js",
-    "index.d.ts"
+    "index.d.ts",
+    "*.node",
+    "!*.tsbuildinfo"
   ],
-  "optionalDependencies": {
-    "rust-kzg-node-darwin-x64": "0.0.2",
-    "rust-kzg-node-darwin-arm64": "0.0.2",
-    "rust-kzg-node-win32-x64": "0.0.2",
-    "rust-kzg-node-win32-arm64": "0.0.2",
-    "rust-kzg-node-linux-x64-gnu": "0.0.2",
-    "rust-kzg-node-linux-arm64-gnu": "0.0.2",
-    "rust-kzg-node-linux-x64-musl": "0.0.2",
-    "rust-kzg-node-linux-arm64-musl": "0.0.2"
-  },
   "devDependencies": {
     "@napi-rs/cli": "^3.4.1"
   },
+  "napi": {
+    "name": "rust-kzg-node"
+  },
+  "os": [
+    "win32",
+    "darwin",
+    "linux"
+  ],
+  "cpu": [
+    "x64",
+    "arm64"
+  ],
   "resolutions": {
     "js-yaml": "^4.1.1"
   }
