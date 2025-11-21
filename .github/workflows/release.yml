@@ -17,73 +17,90 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        target:
+          - x86_64-pc-windows-msvc
+          - aarch64-pc-windows-msvc
+          - x86_64-apple-darwin
+          - aarch64-apple-darwin
+          - x86_64-unknown-linux-gnu
+          - aarch64-unknown-linux-gnu
+          - x86_64-unknown-linux-musl
+          - aarch64-unknown-linux-musl
         include:
-          - target: x86_64-apple-darwin
-            os: macos-latest
-
-          - target: aarch64-apple-darwin
-            os: macos-latest
-
           - target: x86_64-pc-windows-msvc
             os: windows-latest
-
           - target: aarch64-pc-windows-msvc
             os: windows-latest
-
+          - target: x86_64-apple-darwin
+            os: macos-latest
+          - target: aarch64-apple-darwin
+            os: macos-latest
           - target: x86_64-unknown-linux-gnu
             os: ubuntu-latest
-
           - target: aarch64-unknown-linux-gnu
             os: ubuntu-latest
-            linux_arm: true
-
           - target: x86_64-unknown-linux-musl
             os: ubuntu-latest
-            linux_arm: true
-
           - target: aarch64-unknown-linux-musl
             os: ubuntu-latest
-            linux_arm: true
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Install Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20.x
+          cache: "yarn"
 
-      - name: Install Rust toolchain
+      - name: Install Rust Toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
 
-      # ========== ONLY FOR LINUX ARM/MUSL ==========
-      - name: Install Zig (only for ARM/musl build)
-        if: matrix.linux_arm == true
-        run: |
-          sudo snap install zig --classic
+      # ----------------------------------------------------------------------
+      # 🚀 关键改进 1: 使用 cross-rs/cross-toolchain-action 解决 Linux 交叉编译问题
+      # ----------------------------------------------------------------------
+      - name: Build Linux Targets (using cross for stability)
+        # 仅对运行在 Linux 上的任务执行
+        if: runner.os == 'Linux'
+        uses: cross-rs/cross-toolchain-action@v0.2.0
+        with:
+          target: ${{ matrix.target }}
+          # 这一步将在 cross 容器内部执行 `yarn install` 和 `yarn build`
+          command: |
+            # 必须在容器内安装依赖和构建
+            yarn install --frozen-lockfile
+            yarn build --release --target ${{ matrix.target }}
+          # NAPI-RS 针对 MUSL 目标的特殊环境变量
+          environment: |
+            NAPI_RS_BUNDLED_MUSL: 1
+          # 启用网络，避免在容器内安装依赖时出现网络问题
+          docker-options: --network host
 
-      - name: Configure zig CC (only for ARM/musl)
-        if: matrix.linux_arm == true
-        run: |
-          # zig 可以自动选择 musl or gnu
-          echo "CC=${{ matrix.target }}=zig cc -target ${{ matrix.target }}" >> $GITHUB_ENV
-          echo "CXX=${{ matrix.target }}=zig c++ -target ${{ matrix.target }}" >> $GITHUB_ENV
-
-      - name: Install dependencies
+      # ----------------------------------------------------------------------
+      # 💻 关键改进 2: 非 Linux 目标的标准构建流程
+      # ----------------------------------------------------------------------
+      - name: Install dependencies (Non-Linux)
+        # 仅对运行在 Windows/macOS 上的任务执行
+        if: runner.os != 'Linux'
         run: yarn install --frozen-lockfile
 
-      # ========== Build ==========
-      - name: Build napi
-        run: npx napi build --platform --release --target ${{ matrix.target }}
+      - name: Build Non-Linux Targets
+        if: runner.os != 'Linux'
+        run: yarn build --release --target ${{ matrix.target }}
 
+      # ----------------------------------------------------------------------
+      # 📦 后续步骤不变
+      # ----------------------------------------------------------------------
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.target }}
-          path: ./**/*.node
+          path: |
+            index.node
+            index.d.ts
 
   publish:
     needs: build
@@ -96,7 +113,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20.x
-          cache: yarn
+          cache: "yarn"
           registry-url: https://registry.npmjs.org
 
       - name: Install dependencies
