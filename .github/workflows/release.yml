@@ -54,31 +54,41 @@ jobs:
           node-version: 20.x
           cache: "yarn"
 
-      - name: Install Rust Toolchain
+      # ----------------------------------------------------------------------
+      # 💻 Step 1: 为 Windows 和 macOS 安装 Rust Toolchain
+      # Linux 目标将在 'cross-action' 内部处理 Rust Toolchain
+      # ----------------------------------------------------------------------
+      - name: Install Rust Toolchain (Non-Linux)
+        if: runner.os != 'Linux'
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
 
       # ----------------------------------------------------------------------
-      # 🚀 关键改进 1: 使用 cross-rs/cross-toolchain-action 解决 Linux 交叉编译问题
+      # 🚀 Step 2: 构建 Linux 目标（使用 cross-rs/cross-action）
       # ----------------------------------------------------------------------
-      - name: Build Linux Targets (using cross for stability)
+      - name: Build Linux Targets (using cross)
         if: runner.os == 'Linux'
-        uses: cross-rs/toolchain-action@v0.2.0
+        # 使用正确的 Action 名称和版本
+        uses: cross-rs/cross-action@v1.0.0
         with:
           target: ${{ matrix.target }}
+          # NAPI_RS_BUNDLED_MUSL 是编译 musl 目标的关键环境变量
+          env: |
+            NAPI_RS_BUNDLED_MUSL=1
+          # command: 在 cross 容器内执行的命令
           command: |
+            # 必须在 cross 容器内安装依赖
             yarn install --frozen-lockfile
+            # 运行您的 napi-rs 构建命令
             yarn build --release --target ${{ matrix.target }}
-          environment: |
-            NAPI_RS_BUNDLED_MUSL: 1
+          # 确保容器可以访问网络进行 yarn install
           docker-options: --network host
 
       # ----------------------------------------------------------------------
-      # 💻 关键改进 2: 非 Linux 目标的标准构建流程
+      # 💻 Step 3: 构建 Non-Linux 目标 (macOS 和 Windows)
       # ----------------------------------------------------------------------
       - name: Install dependencies (Non-Linux)
-        # 仅对运行在 Windows/macOS 上的任务执行
         if: runner.os != 'Linux'
         run: yarn install --frozen-lockfile
 
@@ -87,12 +97,13 @@ jobs:
         run: yarn build --release --target ${{ matrix.target }}
 
       # ----------------------------------------------------------------------
-      # 📦 后续步骤不变
+      # 📦 Step 4: 上传制品
       # ----------------------------------------------------------------------
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.target }}
+          # 假设 index.node 和 index.d.ts 在根目录或构建后被移动到根目录
           path: |
             index.node
             index.d.ts
@@ -123,14 +134,21 @@ jobs:
       - name: Prepare publish assets
         run: |
           mkdir -p npm
+          # 复制核心文件
           cp index.js package.json README.md npm/
           cp artifacts/index.d.ts npm/
-          for target in $(cat napi.config.json | jq -r '.triples[]'); do
-            mkdir -p npm/$target
-            cp artifacts/$target/index.node npm/$target/
-          done
+          
+          # 根据 napi.config.json 遍历目标，复制 .node 文件到对应目录
+          if [ -f napi.config.json ]; then
+            for target in $(cat napi.config.json | jq -r '.triples[]'); do
+              mkdir -p npm/$target
+              cp artifacts/$target/index.node npm/$target/
+            done
+          else
+            echo "Warning: napi.config.json not found. Assuming standard structure."
+          fi
 
-      - name: Prepublish
+      - name: Prepublish (NAPI-RS)
         working-directory: ./npm
         run: npx napi prepublish -t npm
 
