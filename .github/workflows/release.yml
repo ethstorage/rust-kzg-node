@@ -29,8 +29,6 @@ jobs:
         include:
           - target: x86_64-pc-windows-msvc
             os: windows-latest
-          - target: aarch64-pc-windows-msvc
-            os: windows-latest
           - target: x86_64-apple-darwin
             os: macos-latest
           - target: aarch64-apple-darwin
@@ -54,56 +52,58 @@ jobs:
           node-version: 20.x
           cache: "yarn"
 
-      # ----------------------------------------------------------------------
-      # 💻 Step 1: 为 Windows 和 macOS 安装 Rust Toolchain
-      # Linux 目标将在 'cross-action' 内部处理 Rust Toolchain
-      # ----------------------------------------------------------------------
-      - name: Install Rust Toolchain (Non-Linux)
-        if: runner.os != 'Linux'
+      - name: Install Rust Toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
 
       # ----------------------------------------------------------------------
-      # 🚀 Step 2: 构建 Linux 目标（使用 cross-rs/cross-action）
+      # 🛠️ 关键修正：手动配置 Linux 交叉编译依赖和链接器
       # ----------------------------------------------------------------------
-      - name: Build Linux Targets (using cross)
+      - name: Install Linux dependencies and configure linker
         if: runner.os == 'Linux'
-        # 使用正确的 Action 名称和版本
-        uses: cross-rs/cross-action@v1.0.0
-        with:
-          target: ${{ matrix.target }}
-          # NAPI_RS_BUNDLED_MUSL 是编译 musl 目标的关键环境变量
-          env: |
-            NAPI_RS_BUNDLED_MUSL=1
-          # command: 在 cross 容器内执行的命令
-          command: |
-            # 必须在 cross 容器内安装依赖
-            yarn install --frozen-lockfile
-            # 运行您的 napi-rs 构建命令
-            yarn build --release --target ${{ matrix.target }}
-          # 确保容器可以访问网络进行 yarn install
-          docker-options: --network host
+        run: |
+          sudo apt-get update
+          
+          # 1. 针对 MUSL 目标
+          if [[ "${{ matrix.target }}" == *-musl ]]; then
+            sudo apt-get install -y musl-tools
+            # Napi-rs 环境变量
+            echo "NAPI_RS_BUNDLED_MUSL=1" >> $GITHUB_ENV
+          fi
 
-      # ----------------------------------------------------------------------
-      # 💻 Step 3: 构建 Non-Linux 目标 (macOS 和 Windows)
-      # ----------------------------------------------------------------------
-      - name: Install dependencies (Non-Linux)
-        if: runner.os != 'Linux'
+          # 2. 针对 AARCH64-GNU 交叉编译
+          if [[ "${{ matrix.target }}" == aarch64-unknown-linux-gnu ]]; then
+            sudo apt-get install -y gcc-aarch64-linux-gnu
+          
+            # 配置 Cargo 链接器（这是解决挂起或失败的关键）
+            mkdir -p ~/.cargo
+            CARGO_CONFIG_PATH="$HOME/.cargo/config.toml"
+          
+            # 如果文件不存在则创建
+            if [ ! -f "$CARGO_CONFIG_PATH" ]; then
+              touch "$CARGO_CONFIG_PATH"
+            fi
+          
+            # 写入配置
+            echo '[target.aarch64-unknown-linux-gnu]' >> "$CARGO_CONFIG_PATH"
+            echo 'linker = "aarch64-linux-gnu-gcc"' >> "$CARGO_CONFIG_PATH"
+          fi
+          
+          # 3. Napi-rs 核心环境变量
+          echo "NAPI_RS_NATIVE_NODE_MODULE=1" >> $GITHUB_ENV
+
+      - name: Install dependencies
         run: yarn install --frozen-lockfile
 
-      - name: Build Non-Linux Targets
-        if: runner.os != 'Linux'
+      - name: Build ${{ matrix.target }}
+        # Napi-rs 推荐直接使用 yarn build --release --target
         run: yarn build --release --target ${{ matrix.target }}
 
-      # ----------------------------------------------------------------------
-      # 📦 Step 4: 上传制品
-      # ----------------------------------------------------------------------
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.target }}
-          # 假设 index.node 和 index.d.ts 在根目录或构建后被移动到根目录
           path: |
             index.node
             index.d.ts
@@ -134,14 +134,13 @@ jobs:
       - name: Prepare publish assets
         run: |
           mkdir -p npm
-          # 复制核心文件
           cp index.js package.json README.md npm/
           cp artifacts/index.d.ts npm/
           
-          # 根据 napi.config.json 遍历目标，复制 .node 文件到对应目录
           if [ -f napi.config.json ]; then
             for target in $(cat napi.config.json | jq -r '.triples[]'); do
               mkdir -p npm/$target
+              # 复制制品，注意这里的路径依赖于您的 napi 构建输出
               cp artifacts/$target/index.node npm/$target/
             done
           else
