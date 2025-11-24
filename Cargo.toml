@@ -1,8 +1,9 @@
+
 [package]
+authors = ["EthStorage"]
+edition = "2021"
 name = "rust_kzg_node"
 version = "0.1.0"
-edition = "2021"
-description = "High-performance KZG library bridge for Node.js using rust-kzg-blst."
 
 [lib]
 crate-type = ["cdylib"]
@@ -10,10 +11,14 @@ crate-type = ["cdylib"]
 [dependencies]
 rust-kzg-blst = { git = "https://github.com/grandinetech/rust-kzg", package = "rust-kzg-blst" }
 kzg = { git = "https://github.com/grandinetech/rust-kzg", package = "kzg" }
-napi = { version = "3.1.1" }
-napi-derive = "3.1.1"
+napi = "3.0.0"
+napi-derive = "3.0.0"
 rayon = "1.7"
 hex = "0.4"
 
 [build-dependencies]
-napi-build = "1.0.1"
+napi-build = "2"
+
+[profile.release]
+lto = true
+strip = "symbols"
