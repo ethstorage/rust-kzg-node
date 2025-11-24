@@ -1,2 +1,14 @@
 /.idea/
 /node_modules/
+node_modules/
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+target/
+*.node
+
+index.d.ts
+
+.DS_Store  # macOS
+Thumbs.db  # Windows
