@@ -1,6 +1,6 @@
 {
   "name": "rust-kzg-node",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Rust KZG Node.js bridge",
   "repository": "https://github.com/ethstorage/rust-kzg-node/",
   "main": "index.js",
@@ -28,13 +28,11 @@
       "x86_64-unknown-linux-musl",
       "aarch64-unknown-linux-gnu",
       "i686-pc-windows-msvc",
-      "armv7-unknown-linux-gnueabihf",
       "aarch64-apple-darwin",
       "aarch64-linux-android",
       "x86_64-unknown-freebsd",
       "aarch64-unknown-linux-musl",
       "aarch64-pc-windows-msvc",
-      "armv7-linux-androideabi",
       "wasm32-wasip1-threads"
     ]
   },
