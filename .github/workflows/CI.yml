@@ -312,6 +312,25 @@ jobs:
           path: artifacts
       - name: Move artifacts
         run: yarn artifacts
+
+      - name: Patch WASM package.json for Universal Install
+        run: |
+          WASM_PACKAGE_DIR="./npm/${{ env.APP_NAME }}-wasm32-wasip1-threads"
+
+          if [ -d "$WASM_PACKAGE_DIR" ]; then
+            echo "Patching WASM package in $WASM_PACKAGE_DIR"
+
+            SED="sed -i"
+            $SED '/"cpu":/d' "$WASM_PACKAGE_DIR/package.json"
+            $SED '/"os":/d' "$WASM_PACKAGE_DIR/package.json"
+            $SED '/"napi":/d' "$WASM_PACKAGE_DIR/package.json"
+
+            echo "WASM Package.json patched successfully."
+          else
+            echo "WASM package directory not found, skipping patch."
+          fi
+        shell: bash
+
       - name: List packages
         run: ls -R ./npm
         shell: bash
