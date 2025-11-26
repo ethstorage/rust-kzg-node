@@ -315,7 +315,7 @@ jobs:
 
       - name: Patch WASM package.json for Universal Install
         run: |
-          WASM_PACKAGE_DIR="./npm/${{ env.APP_NAME }}-wasm32-wasi"
+          WASM_PACKAGE_DIR="./npm/wasm32-wasi"
 
           if [ -d "$WASM_PACKAGE_DIR" ]; then
             echo "Patching WASM package in $WASM_PACKAGE_DIR"
