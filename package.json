@@ -36,6 +36,14 @@
       "wasm32-wasip1-threads"
     ]
   },
+  "resolutions": {
+    "rust-kzg-node-android-arm-eabi": "false",
+    "rust-kzg-node-linux-arm-gnueabihf": "false",
+    "rust-kzg-node-armv7-linux-androideabi": "false",
+    "rust-kzg-node-android-armv7": "false",
+    "rust-kzg-node-linux-armv7": "false",
+    "rust-kzg-node-linux-armv6": "false"
+  },
   "engines": {
     "node": ">= 18"
   },
