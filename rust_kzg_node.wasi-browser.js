@@ -5,13 +5,13 @@ import {
   WASI as __WASI,
 } from '@napi-rs/wasm-runtime'
 
-
+import __wasmRawUrl from './rust_kzg_node.wasm32-wasi.wasm';
 
 const __wasi = new __WASI({
   version: 'preview1',
 })
 
-const __wasmUrl = new URL('./rust_kzg_node.wasm32-wasi.wasm', import.meta.url).href
+const __wasmUrl = new URL(__wasmRawUrl, import.meta.url).href;
 const __emnapiContext = __emnapiGetDefaultContext()
 
 
