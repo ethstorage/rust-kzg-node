@@ -29,19 +29,14 @@ const {
   napiModule: __napiModule,
 } = __emnapiInstantiateNapiModuleSync(__wasmFile, {
   context: __emnapiContext,
-  asyncWorkPoolSize: 0,
+  asyncWorkPoolSize: 4,
   wasi: __wasi,
   onCreateWorker() {
-    // const worker = new Worker(new URL('./wasi-worker-browser.mjs', import.meta.url), {
-    //   type: 'module',
-    // })
-    const dummyWorker = {
-      postMessage: () => {},
-      terminate: () => {},
-      onmessage: null,
-      onerror: null
-    };
-    return dummyWorker;
+    const worker = new Worker(new URL('./wasi-worker-browser.mjs', import.meta.url), {
+      type: 'module',
+    })
+
+    return worker
   },
   overwriteImports(importObject) {
     importObject.env = {
