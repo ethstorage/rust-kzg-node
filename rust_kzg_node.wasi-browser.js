@@ -18,7 +18,7 @@ const __emnapiContext = __emnapiGetDefaultContext()
 const __sharedMemory = new WebAssembly.Memory({
   initial: 4000,
   maximum: 65536,
-  shared: false,
+  shared: true,
 })
 
 const __wasmFile = await fetch(__wasmUrl).then((res) => res.arrayBuffer())
@@ -32,11 +32,16 @@ const {
   asyncWorkPoolSize: 0,
   wasi: __wasi,
   onCreateWorker() {
-    const worker = new Worker(new URL('./wasi-worker-browser.mjs', import.meta.url), {
-      type: 'module',
-    })
-
-    return worker
+    // const worker = new Worker(new URL('./wasi-worker-browser.mjs', import.meta.url), {
+    //   type: 'module',
+    // })
+    const dummyWorker = {
+      postMessage: () => {},
+      terminate: () => {},
+      onmessage: null,
+      onerror: null
+    };
+    return dummyWorker;
   },
   overwriteImports(importObject) {
     importObject.env = {
